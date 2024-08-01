@@ -12,6 +12,7 @@ const Quiz = () => {
   const [showResults, setShowResults] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [unansweredQuestions, setUnansweredQuestions] = useState(0);
+  const [isStarted, setIsStarted] = useState(false); // New state to control quiz start
 
   const fetchQuestions = async (retries = 3, delay = 1000) => {
     try {
@@ -57,7 +58,7 @@ const Quiz = () => {
 
   const onClickTimer = () => {
     setFinish(true);
-    handleTimeUp(); // Memanggil handleTimeUp saat tombol "Finish" ditekan
+    handleTimeUp();
   };
 
   const handleAnswer = (answer) => {
@@ -78,7 +79,7 @@ const Quiz = () => {
       setSelectedAnswer(null);
     } else {
       setShowResults(true);
-      setFinish(true); // Mengatur finish menjadi true saat kuis selesai
+      setFinish(true);
       const quizResults = JSON.parse(localStorage.getItem('quizResults')) || [];
       quizResults.push({ 
         score: score + (selectedAnswer === question.correct_answer ? 1 : 0), 
@@ -93,7 +94,7 @@ const Quiz = () => {
 
   const handleTimeUp = () => {
     setShowResults(true);
-    setFinish(true); // Mengatur finish menjadi true saat waktu habis
+    setFinish(true);
     Swal.fire({
       title: "Finished",
       text: "Your quiz is finished!",
@@ -123,51 +124,67 @@ const Quiz = () => {
 
   return (
     <div className="bg-gray-900 grid grid-cols-2 py-20">
-      <h3 className='text-white flex items-start justify-start absolute top-3 right-5'>
-        <i className="fas fa-user mr-2"></i>{localStorage.getItem('username')}
+      <h3 className='text-white flex items-center justify-start absolute top-3 right-5'>
+        {localStorage.getItem('username')} <i className="fas fa-user mx-4"></i>
       </h3>
       <div className="my-6">
-        <Timer duration={20} onFinish={handleTimeUp} finish={finish} />
-        <History />
-      </div>
-      <div className="w-full max-w-md p-6 bg-gray-800 rounded-lg shadow-md my-6">
-        {showResults ? (
-          <div>
-            <h1 className="text-white text-2xl mb-4 text-center">Quiz Results</h1>
-            <p className="text-white mb-4">Correct Answers: {score}</p>
-            <p className="text-white mb-4">Incorrect Answers: {questions.length - score - unansweredQuestions}</p>
-            <p className="text-white mb-4">Unanswered Questions: {unansweredQuestions}</p>
-            <p className="text-white mb-4">Total Questions: {questions.length}</p>
-          </div>
-        ) : (
+        {isStarted ? (
           <>
-            <h1 className="text-white text-2xl mb-4 text-center">
-              Question {currentIndex + 1}/{questions.length}
-            </h1>
-            <h2 className="text-white mb-4">{question.question}</h2>
-            <div className="space-y-2">
-              {allAnswers.map((answer, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleAnswer(answer)}
-                  className={`w-full p-2 rounded ${selectedAnswer === answer ? 'bg-blue-700' : 'bg-blue-500'} text-white`}
-                  disabled={selectedAnswer !== null}
-                >
-                  {answer}
-                </button>
-              ))}
-              <br /><br />
-              <div className="flex justify-end">
-                {selectedAnswer && (
-                  <button onClick={currentIndex + 1 === questions.length ? onClickTimer : handleNext} className="bg-gray-200 px-5 py-2 rounded-xl font-bold">
-                    {currentIndex + 1 === questions.length ? "Finish" : "Next"}
-                  </button>
-                )}
-              </div>
-            </div>
+            <Timer duration={20} onFinish={handleTimeUp} finish={finish} />
+            <History />
           </>
+        ) : (
+          <div className="w-full max-w-md p-6 bg-gray-800 rounded-lg shadow-md my-6 text-center mx-auto">
+            <h1 className="text-white text-2xl mb-4">Welcome to the Quiz!</h1>
+            <button 
+              onClick={() => setIsStarted(true)} 
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Start Quiz
+            </button>
+          </div>
         )}
       </div>
+      {isStarted && (
+        <div className="w-full max-w-md p-6 bg-gray-800 rounded-lg shadow-md my-6">
+          {showResults ? (
+            <div>
+              <h1 className="text-white text-2xl mb-7 text-center">Quiz Results</h1>
+              <p className="text-white mb-4 flex items-center"><span className="material-symbols-outlined mx-3">check_circle</span>Correct Answers: {score}</p>
+              <p className="text-white mb-4 flex items-center"><span className="material-symbols-outlined mx-3">cancel</span>Incorrect Answers: {questions.length - score - unansweredQuestions}</p>
+              <p className="text-white mb-4 flex items-center"><span className="material-symbols-outlined mx-3">error</span>Unanswered Questions: {unansweredQuestions}</p>
+              <p className="text-white mb-4 flex items-center"><span className="material-symbols-outlined mx-3">task</span>Total Questions: {questions.length}</p>
+            </div>
+          ) : (
+            <>
+              <h1 className="text-white text-2xl mb-4 text-center">
+                Question {currentIndex + 1}/{questions.length}
+              </h1>
+              <h2 className="text-white mb-4">{question.question}</h2>
+              <div className="space-y-2">
+                {allAnswers.map((answer, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(answer)}
+                    className={`w-full p-2 rounded ${selectedAnswer === answer ? 'bg-blue-700' : 'bg-blue-500'} text-white`}
+                    disabled={selectedAnswer !== null}
+                  >
+                    {answer}
+                  </button>
+                ))}
+                <br /><br />
+                <div className="flex justify-end">
+                  {selectedAnswer && (
+                    <button onClick={currentIndex + 1 === questions.length ? onClickTimer : handleNext} className="bg-gray-200 px-5 py-2 rounded-xl font-bold">
+                      {currentIndex + 1 === questions.length ? "Finish" : "Next"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 };
